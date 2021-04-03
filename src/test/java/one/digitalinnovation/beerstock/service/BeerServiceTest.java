@@ -153,4 +153,20 @@ public class BeerServiceTest {
         verify(beerRepository, times(1)).deleteById(expectedDeletedBeerDTO.getId());
     }
 
+    @Test
+    @DisplayName("Quando a exclusão é chamada com um ID invalido, então uma exceção deve ser lançada")
+    void whenExclusionIsCalledWithInvalidIdThenThrowAnException() throws BeerNotFoundException {
+        // GIVEN
+        BeerDTO deleteInvalidBeerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
+
+        // WHEN
+        when(beerRepository.findById(deleteInvalidBeerDTO.getId())).thenReturn(Optional.empty());
+
+        // THEN ASSERT THROW
+        assertThrows(
+                BeerNotFoundException.class,
+                () ->  beerService.deleteById(deleteInvalidBeerDTO.getId())
+        );
+    }
+
 }
