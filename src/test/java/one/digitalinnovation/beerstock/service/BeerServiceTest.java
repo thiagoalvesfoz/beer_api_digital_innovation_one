@@ -14,6 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -72,6 +74,7 @@ public class BeerServiceTest {
     }
 
     @Test
+    @DisplayName("Quando um nome de cerveja válido é fornecido, então retorne uma cerveja")
     void whenValidBeerNameIsGivenThenReturnABeer() throws BeerNotFoundException {
         // GIVEN
         BeerDTO expectedBeerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
@@ -88,6 +91,7 @@ public class BeerServiceTest {
     }
 
     @Test
+    @DisplayName("Quando o nome da cerveja não registrada é fornecido, lance uma exceção")
     void whenNotRegisteredBeerNameIsGivenThenThrowAnException() {
         // GIVEN
         BeerDTO expectedBeerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
@@ -99,4 +103,34 @@ public class BeerServiceTest {
         assertThrows(BeerNotFoundException.class, () -> beerService.findByName(expectedBeerDTO.getName()));
     }
 
+    @Test
+    @DisplayName("Quando a listagem de cervejas for chamada, então retorne a lista de cervejas")
+    void whenListBeerIsCalledThenReturnListOfBeers() {
+        // GIVEN
+        BeerDTO expectedBeerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
+        Beer expectedFoundBear = beerMapper.toModel(expectedBeerDTO);
+
+        // WHEN
+        when(beerRepository.findAll()).thenReturn(Collections.singletonList(expectedFoundBear));
+        
+        // THEN
+        List<BeerDTO> foundListBeerDTOS = beerService.listAll();
+
+        //ASSERT WITH HAMCREST MATCHERS
+        assertThat(foundListBeerDTOS, is(not(empty())));
+        assertThat(foundListBeerDTOS, contains(expectedBeerDTO));
+    }
+
+    @Test
+    @DisplayName("Quando a listagem de cerveja é chamada, então retorna uma lista vazia de cervejas")
+    void whenListBeerIsCalledThenReturnAnEmptyListOfBeers() {
+        // WHEN
+        when(beerRepository.findAll()).thenReturn(Collections.emptyList());
+
+        // THEN
+        List<BeerDTO> foundListBeerDTOS = beerService.listAll();
+
+        //ASSERT WITH HAMCREST MATCHERS
+        assertThat(foundListBeerDTOS, is(empty()));
+    }
 }
