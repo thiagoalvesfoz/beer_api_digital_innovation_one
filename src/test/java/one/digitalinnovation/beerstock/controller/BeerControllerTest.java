@@ -217,4 +217,57 @@ public class BeerControllerTest {
                 content(asJsonString(quantityDTO))).
                 andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("Quando o método PATH for chamado para diminuir o desconto, então o status ok é retornado")
+    void whenPATCHIsCalledToDecrementDiscountThenOkStatusIsReturned() throws Exception {
+        // GIVEN
+        QuantityDTO quantityDTO = QuantityDTO.builder().quantity(5).build();
+        BeerDTO expectedBeerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
+        expectedBeerDTO.setQuantity(expectedBeerDTO.getQuantity() - quantityDTO.getQuantity());
+
+        // WHEN
+        when(beerService.decrement(VALID_BEER_ID, quantityDTO.getQuantity())).thenReturn(expectedBeerDTO);
+
+        // ASSERT
+        mockMvc.perform(patch(BEER_API_URL_PATH.concat("/" + VALID_BEER_ID + BEER_API_SUB_PATH_DECREMENT_URL)).
+                contentType(MediaType.APPLICATION_JSON).
+                content(asJsonString(quantityDTO))).
+                andExpect(status().isOk()).
+                andExpect(jsonPath("$.name", Is.is(expectedBeerDTO.getName()))).
+                andExpect(jsonPath("$.brand", Is.is(expectedBeerDTO.getBrand()))).
+                andExpect(jsonPath("$.type", Is.is(expectedBeerDTO.getType().toString()))).
+                andExpect(jsonPath("$.quantity", Is.is(expectedBeerDTO.getQuantity())));
+    }
+
+    @Test
+    @DisplayName("Quando o método PATH for chamado com decremento menor que zero, então o status ok bad request é retornado")
+    void whenPATCHIsCalledToDecrementLowerThanZeroThenBadRequestStatusIsReturned() throws Exception {
+        // GIVEN
+        QuantityDTO quantityDTO = QuantityDTO.builder().quantity(60).build();
+
+        // WHEN
+        when(beerService.decrement(VALID_BEER_ID, quantityDTO.getQuantity())).thenThrow(BeerStockExceededException.class);
+
+        mockMvc.perform(patch(BEER_API_URL_PATH.concat("/" + VALID_BEER_ID + BEER_API_SUB_PATH_DECREMENT_URL))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(quantityDTO))).
+                andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Quando o método PATH for chamado id de cerveja invalido, então o status not found é retornado")
+    void whenPATCHIsCalledWithInvalidBeerIdToDecrementThenNotFoundStatusIsReturned() throws Exception {
+        // GIVEN
+        QuantityDTO quantityDTO = QuantityDTO.builder().quantity(5).build();
+
+        // WHEN
+        when(beerService.decrement(INVALID_BEER_ID, quantityDTO.getQuantity())).thenThrow(BeerNotFoundException.class);
+
+        // THEN WITH ASSERT
+        mockMvc.perform(patch(BEER_API_URL_PATH.concat("/" + INVALID_BEER_ID + BEER_API_SUB_PATH_DECREMENT_URL))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(quantityDTO)))
+                .andExpect(status().isNotFound());
+    }
 }
