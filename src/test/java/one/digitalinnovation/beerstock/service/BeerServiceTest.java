@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -112,7 +113,7 @@ public class BeerServiceTest {
 
         // WHEN
         when(beerRepository.findAll()).thenReturn(Collections.singletonList(expectedFoundBear));
-        
+
         // THEN
         List<BeerDTO> foundListBeerDTOS = beerService.listAll();
 
@@ -155,18 +156,12 @@ public class BeerServiceTest {
 
     @Test
     @DisplayName("Quando a exclusão é chamada com um ID invalido, então uma exceção deve ser lançada")
-    void whenExclusionIsCalledWithInvalidIdThenThrowAnException() throws BeerNotFoundException {
-        // GIVEN
-        BeerDTO deleteInvalidBeerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
-
+    void whenExclusionIsCalledWithInvalidIdThenThrowAnException() {
         // WHEN
-        when(beerRepository.findById(deleteInvalidBeerDTO.getId())).thenReturn(Optional.empty());
+        when(beerRepository.findById(INVALID_BEER_ID)).thenReturn(Optional.empty());
 
         // THEN ASSERT THROW
-        assertThrows(
-                BeerNotFoundException.class,
-                () ->  beerService.deleteById(deleteInvalidBeerDTO.getId())
-        );
+        assertThrows(BeerNotFoundException.class, () -> beerService.deleteById(INVALID_BEER_ID));
     }
 
 }

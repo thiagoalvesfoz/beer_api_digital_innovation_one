@@ -15,20 +15,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
 import static one.digitalinnovation.beerstock.utils.JsonConvertionUtils.asJsonString;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Testes Unitários em BeerController")
@@ -143,5 +141,27 @@ public class BeerControllerTest {
         mockMvc.perform(get(BEER_API_URL_PATH).
                 contentType(MediaType.APPLICATION_JSON)).
                 andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Quando o método DELETE for chamado com um ID válido, então o status no content deverá ser retornado")
+    void whenDELETEIsCalledWithValidIdThenNoContentStatusIsReturned() throws Exception {
+        // WHEN
+        doNothing().when(beerService).deleteById(VALID_BEER_ID);
+
+        mockMvc.perform(delete(BEER_API_URL_PATH.concat(format("/%d", VALID_BEER_ID))).
+                contentType(MediaType.APPLICATION_JSON)).
+                andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Quando o método DELETE for chamado com um ID inválido, então o status not found deverá ser retornado")
+    void whenDELETEIsCalledWithInvalidIdThenNotFoundIsReturned() throws Exception {
+        // WHEN
+        doThrow(BeerNotFoundException.class).when(beerService).deleteById(INVALID_BEER_ID);
+
+        mockMvc.perform(delete(BEER_API_URL_PATH.concat(format("/%d", INVALID_BEER_ID))).
+                contentType(MediaType.APPLICATION_JSON)).
+                andExpect(status().isNotFound());
     }
 }
