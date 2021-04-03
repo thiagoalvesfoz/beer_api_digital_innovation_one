@@ -132,9 +132,6 @@ public class BeerControllerTest {
     @Test
     @DisplayName("Quando o método GET para listagem de cerveja for chamado, então retorne o status ok")
     void whenGETBeersListIsCalledThenReturnTheStatusOkWithEmptyList() throws Exception {
-        // GIVEN
-        BeerDTO beerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
-
         // WHEN
         when(beerService.listAll()).thenReturn(Collections.emptyList());
 
