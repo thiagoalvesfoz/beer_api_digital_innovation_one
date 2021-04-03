@@ -2,7 +2,9 @@ package one.digitalinnovation.beerstock.controller;
 
 import one.digitalinnovation.beerstock.builder.BeerDTOBuilder;
 import one.digitalinnovation.beerstock.dto.BeerDTO;
+import one.digitalinnovation.beerstock.dto.QuantityDTO;
 import one.digitalinnovation.beerstock.exception.BeerNotFoundException;
+import one.digitalinnovation.beerstock.exception.BeerStockExceededException;
 import one.digitalinnovation.beerstock.service.BeerService;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
@@ -160,5 +162,59 @@ public class BeerControllerTest {
         mockMvc.perform(delete(BEER_API_URL_PATH.concat(format("/%d", INVALID_BEER_ID))).
                 contentType(MediaType.APPLICATION_JSON)).
                 andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Quando o método PATH for chamado para aumentar o desconto, então o status ok é retornado")
+    void whenPATCHIsCalledToIncrementDiscountThenOkStatusIsReturned() throws Exception {
+        // GIVEN
+        QuantityDTO quantityDTO = QuantityDTO.builder().quantity(10).build();
+        BeerDTO beerDTO = BeerDTOBuilder.builder().build().toBeerDTO();
+        beerDTO.setQuantity(beerDTO.getQuantity() + quantityDTO.getQuantity());
+
+        // WHEN
+        when(beerService.increment(VALID_BEER_ID, quantityDTO.getQuantity())).thenReturn(beerDTO);
+
+        // ASSERT
+        mockMvc.perform(patch(BEER_API_URL_PATH.concat("/" + VALID_BEER_ID + BEER_API_SUB_PATH_INCREMENT_URL)).
+                contentType(MediaType.APPLICATION_JSON).
+                content(asJsonString(quantityDTO))).
+                andExpect(status().isOk()).
+                andExpect(jsonPath("$.name", Is.is(beerDTO.getName()))).
+                andExpect(jsonPath("$.brand", Is.is(beerDTO.getBrand()))).
+                andExpect(jsonPath("$.type", Is.is(beerDTO.getType().toString()))).
+                andExpect(jsonPath("$.quantity", Is.is(beerDTO.getQuantity())));
+    }
+
+    @Test
+    @DisplayName("Quando o método PATH for chamado com id de cerveja invalido, então o status ok é retornado")
+    void whenPATCHIsCalledWithInvalidBeerIdToIncrementThenNotFoundStatusIsReturned() throws Exception {
+        // GIVEN
+        QuantityDTO quantityDTO = QuantityDTO.builder().quantity(10).build();
+
+        // WHEN
+        when(beerService.increment(VALID_BEER_ID, quantityDTO.getQuantity())).thenThrow(BeerNotFoundException.class);
+
+        // ASSERT
+        mockMvc.perform(patch(BEER_API_URL_PATH.concat("/" + VALID_BEER_ID + BEER_API_SUB_PATH_INCREMENT_URL)).
+                contentType(MediaType.APPLICATION_JSON).
+                content(asJsonString(quantityDTO))).
+                andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Quando o método PATH for chamado com incremento maior que máximo, então o status bad request é retornado")
+    void whenPATCHIsCalledToIncrementGreaterThanMaxThenBadRequestStatusIsReturned() throws Exception {
+        // GIVEN
+        QuantityDTO quantityDTO = QuantityDTO.builder().quantity(80).build();
+
+        // WHEN
+        when(beerService.increment(VALID_BEER_ID, quantityDTO.getQuantity())).thenThrow(BeerStockExceededException.class);
+
+        // ASSERT
+        mockMvc.perform(patch(BEER_API_URL_PATH.concat("/" + VALID_BEER_ID + BEER_API_SUB_PATH_INCREMENT_URL)).
+                contentType(MediaType.APPLICATION_JSON).
+                content(asJsonString(quantityDTO))).
+                andExpect(status().isBadRequest());
     }
 }
