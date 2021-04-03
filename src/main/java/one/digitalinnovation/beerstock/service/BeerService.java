@@ -1,5 +1,6 @@
 package one.digitalinnovation.beerstock.service;
 
+import io.swagger.models.auth.In;
 import lombok.AllArgsConstructor;
 import one.digitalinnovation.beerstock.dto.BeerDTO;
 import one.digitalinnovation.beerstock.entity.Beer;
@@ -13,6 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,14 +64,18 @@ public class BeerService {
                 .orElseThrow(() -> new BeerNotFoundException(id));
     }
 
-    public BeerDTO increment(Long id, int quantityToIncrement) throws BeerNotFoundException, BeerStockExceededException {
+
+    public BeerDTO increment(Long id, int quatityToIncrement) throws BeerStockExceededException, BeerNotFoundException {
         Beer beerToIncrementStock = verifyIfExists(id);
-        int quantityAfterIncrement = quantityToIncrement + beerToIncrementStock.getQuantity();
-        if (quantityAfterIncrement <= beerToIncrementStock.getMax()) {
-            beerToIncrementStock.setQuantity(beerToIncrementStock.getQuantity() + quantityToIncrement);
-            Beer incrementedBeerStock = beerRepository.save(beerToIncrementStock);
-            return beerMapper.toDTO(incrementedBeerStock);
+        int quantityAfterIncrement = beerToIncrementStock.getQuantity() + quatityToIncrement;
+
+        if (quantityAfterIncrement > beerToIncrementStock.getMax()) {
+            throw new BeerStockExceededException(id, quatityToIncrement);
         }
-        throw new BeerStockExceededException(id, quantityToIncrement);
+
+        beerToIncrementStock.setQuantity(quantityAfterIncrement);
+        return beerMapper.toDTO(beerRepository.save(beerToIncrementStock));
+
+
     }
 }
